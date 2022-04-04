@@ -1,0 +1,72 @@
+---
+- hosts: awx
+  become: true
+  tasks:
+  
+  - name: Remove taints in all nodes
+    become: false
+    shell: kubectl taint nodes --all node-role.kubernetes.io/master-
+
+  - name: Install jq
+    become: false
+    shell: sudo apt-get install jq -y
+    
+  - name: Create AWX namespace
+    become: false
+    shell: |
+      export NAMESPACE=awx
+      kubectl create ns ${NAMESPACE}
+      sudo kubectl config set-context --current --namespace=$NAMESPACE 
+
+  - name: Install AWX Operator
+    become: false
+    shell: |
+      cd /tmp && git clone https://github.com/ansible/awx-operator.git
+      cd /tmp/awx-operator/
+      RELEASE_TAG=`curl -s https://api.github.com/repos/ansible/awx-operator/releases/latest | grep tag_name | cut -d '"' -f 4`
+      git checkout $RELEASE_TAG
+      make deploy
+      
+
+  - name: Install Persistent Volume
+    become: false
+    shell: |
+      cat > /tmp/pvc.yaml << EOF
+      ---
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: public-static-data-pvc
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 5Gi
+      EOF
+      kubectl apply -f /tmp/pvc.yaml -n awx
+
+
+  - name: install AWX
+    become: false
+    shell: |
+      cat > /tmp/awx.yaml << EOF
+      ---
+      apiVersion: awx.ansible.com/v1beta1
+      kind: AWX
+      metadata:
+        name: awx
+      spec:
+        service_type: nodeport
+        projects_persistence: true
+        projects_storage_access_mode: ReadWriteOnce
+        web_extra_volume_mounts: |
+          - name: static-data
+            mountPath: /var/lib/projects
+        extra_volumes: |
+          - name: static-data
+            persistentVolumeClaim:
+              claimName: public-static-data-pvc
+      EOF
+      kubectl apply -f /tmp/awx.yaml -n awx

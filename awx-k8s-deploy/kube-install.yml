@@ -1,0 +1,117 @@
+---
+- hosts: awx
+  become: true
+  tasks:
+  - name: Remove swapfile from /etc/fstab
+    mount:
+      name: "{{ item }}"
+      fstype: swap
+      state: absent
+    with_items:
+      - swap
+      - none
+
+  - name: Disable swap
+    command: swapoff -a
+    when: ansible_swaptotal_mb > 0
+
+  - name: Add an apt signing key for Kubernetes
+    apt_key:
+      url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+      state: present
+
+  - name: Adding apt repository for Kubernetes
+    apt_repository:
+      repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+      state: present
+      filename: kubernetes.list
+
+  - name: Install Kubernetes binaries
+    apt: 
+      name: "{{ packages }}"
+      state: present
+      update_cache: yes
+    vars:
+      packages:
+        - kubelet 
+        - kubeadm 
+        - kubectl
+
+  - name: Configure node ip
+    lineinfile:
+      path: /etc/default/kubelet
+      line: KUBELET_EXTRA_ARGS=--node-ip={{ node_ip }}
+      create: yes
+
+  - name: Restart kubelet
+    service:
+      name: kubelet
+      daemon_reload: yes
+      state: restarted
+
+  - name: Change docker cgroup driver to systemd
+    shell:
+      cmd: |
+        touch /etc/docker/daemon.json
+        cat > /etc/docker/daemon.json << EOF
+        {
+          "exec-opts": ["native.cgroupdriver=systemd"],
+          "log-driver": "json-file",
+          "log-opts": {
+            "max-size": "100m"
+          },
+          "storage-driver": "overlay2"
+        }
+        EOF
+        systemctl daemon-reload && service docker restart
+
+  - name: Initialize the Kubernetes cluster using kubeadm
+    command: kubeadm init --apiserver-advertise-address="192.168.233.200" --apiserver-cert-extra-sans="192.168.233.200"  --node-name awx --pod-network-cidr=10.244.0.0/16  --ignore-preflight-errors=Mem
+
+  - name: Setup kubeconfig for vagrant user
+    command: "{{ item }}"
+    with_items:
+     - mkdir -p /home/vagrant/.kube
+     - cp -i /etc/kubernetes/admin.conf /home/vagrant/.kube/config
+     - chown vagrant:vagrant /home/vagrant/.kube/config
+
+  - name: Get latest flannel CNI plugin
+    become: false
+    shell: cd /tmp/ && wget https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+
+  - name: Add eth1 (VM host-only) in flannel CNI plugin
+    become: false
+    shell: |
+      sudo snap install yq
+      yq '(select(.kind == "DaemonSet").spec.template.spec.containers[]|select(.name == "kube-flannel").args) += "--iface=eth1"' < /tmp/kube-flannel.yml >> /tmp/custom-kube-flannel.yml
+
+  - name: Install flannel CNI pod
+    become: false
+    command: kubectl create -f /tmp/custom-kube-flannel.yml
+
+#  - name: Generate join command
+#    command: kubeadm token create --print-join-command
+#    register: join_command
+
+#  - name: Copy join command to local file
+#    local_action: copy content="{{ join_command.stdout_lines[0] }}" dest="./join-command"
+    
+#  - name: Create local Persistent Volume (PV)
+#    become: false
+#    shell: |
+#      cd /tmp && wget https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.19/deploy/local-path-storage.yaml
+#      sed -i "s#/opt/local-path-provisioner#/mnt/local-storage#g" /tmp/local-path-storage.yaml
+#      kubectl apply -f /tmp/local-path-storage.yaml
+#  
+#  - name: Setting local PV as the Default Storage Class
+#    become: false
+#    shell: | 
+#      cat > /tmp/set-default-storage-class.sh << EOF
+#      kubectl patch sc local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+#      EOF
+#      chmod +x /tmp/set-default-storage-class.sh
+#      /tmp/set-default-storage-class.sh
+
+  handlers:
+    - name: docker status
+      service: name=docker state=started
