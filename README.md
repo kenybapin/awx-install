@@ -23,7 +23,7 @@ vagrant up
 ### Access
 ```
 URL: http://<VM-IP>:80
-secret : password (default)
+secret: password (default)
 ```
 <br>
 <br>
@@ -51,5 +51,5 @@ vagrant up
 ### Access
 ```
 URL: http://<VM-IP>:<Nodeport>
-secret: kubectl -n awx get secret awx-admin-password -o go-template='{{range $k,$v := .data}}{{printf "%s: " $k}}{{if not $v}}{{$v}}{{else}}{{$v | base64decode}}{{end}}{{"\n"}}{{end}}'
+secret: kubectl -n awx get secret awx-admin-password -o jsonpath="{.data.password}" | base64 --decode
 ```
