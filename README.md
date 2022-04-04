@@ -14,11 +14,16 @@ Ready to use AWX set up
 -  AWX
 
 ```
-git clone <url>
-cd <git_repo><folder>
+git clone https://github.com/kenybapin/awx-install.git
+cd awx-install/awx-vm-deploy/
 vagrant up
 ```
+> :warning: Cygwin/WSL1 users, git clone in windows dir (/mnt/c/...)
 
+### Access
+```
+URL: http://192.168.233.200
+```
 <br>
 <br>
 
@@ -35,7 +40,13 @@ vagrant up
 -  AWX Pods
 
 ```
-git clone <url>
-cd <git_repo><folder>
+git clone https://github.com/kenybapin/awx-install.git
+cd awx-install/awx-k8s-deploy/
 vagrant up
+```
+> :warning: Cygwin/WSL1 users, git clone in windows dir (/mnt/c/...)
+> 
+### Access
+```
+URL: http://192.168.233.200
 ```
