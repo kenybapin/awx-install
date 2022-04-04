@@ -1,11 +1,12 @@
 # awx-install
 Ready to use AWX set up
 
-## Requirements
+# AWX for Server
+
+### Requirements
 - vagrant
 - ansible 2.9
 
-# AWX for Server
 
 ### Features
 -  Docker
@@ -22,6 +23,10 @@ vagrant up
 <br>
 
 # AWX with Kubernetes (single node)
+
+### Requirements
+- vagrant
+- ansible 2.9
 
 ### Features
 
