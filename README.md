@@ -1,5 +1,6 @@
 # awx-install
 Ready to use AWX set up
+<br>
 
 # AWX for Server
 
@@ -70,3 +71,6 @@ awx-service                                       NodePort    10.105.181.191   <
 URL: http://<VM-IP>:<Nodeport>
 secret: kubectl -n awx get secret awx-admin-password -o jsonpath="{.data.password}" | base64 --decode
 ```
+
+
+![alt text](https://github.com/kenybapin/awx-install/blob/main/awx.jpg?raw=true)
