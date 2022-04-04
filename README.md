@@ -6,7 +6,7 @@ Ready to use AWX set up
 ### Requirements
 - vagrant
 - ansible 2.9
-
+- VM: 1 VCPU / 2GB RAM (minimal)
 
 ### Features
 -  Docker
@@ -33,10 +33,11 @@ secret : password (default)
 ### Requirements
 - vagrant
 - ansible 2.9
+- VM: 4 VCPU / 8GB RAM (minimal)
 
 ### Features
 
--  Flannel Container Networking (CNI)
+-  Flannel CNI
 -  Persistent Volume (Local storage)
 -  AWX Pods
 
