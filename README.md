@@ -1,4 +1,4 @@
-# Deploy ansible AWX using Docker env or K8s.
+# Deploy ansible AWX VM using Docker or Kubernetes.
 <br>
 
 # AWX with Docker
