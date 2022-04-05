@@ -1,8 +1,7 @@
-# awx-install
-Ready to use AWX set up
+# Deploy ansible AWX using Docker env or K8s.
 <br>
 
-# AWX for Server
+# AWX with Docker
 
 ### Requirements
 - vagrant
@@ -41,7 +40,7 @@ secret: password (default)
 
 -  Flannel CNI
 -  Persistent Volume (Local storage)
--  AWX Pods
+-  AWX
 
 ### Setup
 ```
