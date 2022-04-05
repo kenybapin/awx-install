@@ -96,14 +96,14 @@
 #  - name: Copy join command to local file
 #    local_action: copy content="{{ join_command.stdout_lines[0] }}" dest="./join-command"
     
-  - name: Create local Persistent Volume (PV)
+  - name: Install local-path-storage
     become: false
     shell: |
       cd /tmp && wget https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.19/deploy/local-path-storage.yaml
       sed -i "s#/opt/local-path-provisioner#/mnt/local-storage#g" /tmp/local-path-storage.yaml
       kubectl apply -f /tmp/local-path-storage.yaml
   
-  - name: Setting local PV as the Default Storage Class
+  - name: Setting local-path-storage as the Default Storage Class
     become: false
     shell: | 
       cat > /tmp/set-default-storage-class.sh << EOF
